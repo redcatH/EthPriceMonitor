@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Get version from tag
+        id: version
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Publish self-contained (with runtime)
+        run: dotnet publish src/EthPriceMonitor/EthPriceMonitor.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:Version=${{ steps.version.outputs.VERSION }} -o publish/self-contained
+
+      - name: Publish framework-dependent (without runtime)
+        run: dotnet publish src/EthPriceMonitor/EthPriceMonitor.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.VERSION }} -o publish/framework-dependent
+
+      - name: Zip self-contained
+        shell: pwsh
+        run: Compress-Archive -Path publish/self-contained/* -DestinationPath EthPriceMonitor-${{ steps.version.outputs.VERSION }}-win-x64-self-contained.zip
+
+      - name: Zip framework-dependent
+        shell: pwsh
+        run: Compress-Archive -Path publish/framework-dependent/* -DestinationPath EthPriceMonitor-${{ steps.version.outputs.VERSION }}-win-x64-framework-dependent.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ETH Price Monitor ${{ github.ref_name }}
+          body: |
+            ## ETH Price Monitor ${{ github.ref_name }}
+
+            ### Downloads
+
+            | Package | Description | Requirements |
+            |---|---|---|
+            | `self-contained` | Includes .NET 8 runtime, standalone executable | None — just run it |
+            | `framework-dependent` | Smaller size, requires .NET 8 runtime pre-installed | [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+
+            ### What's New
+            - Floating ETH/USDT price widget with real-time Binance WebSocket data
+            - Pin / click-through mode (📌 button or tray menu)
+            - Price alert thresholds with Windows Toast notifications
+            - System tray integration with context menu
+            - Auto-start with Windows option
+            - Adjustable opacity and always-on-top
+            - Dark/light theme following system preference
+          files: |
+            EthPriceMonitor-${{ steps.version.outputs.VERSION }}-win-x64-self-contained.zip
+            EthPriceMonitor-${{ steps.version.outputs.VERSION }}-win-x64-framework-dependent.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
