@@ -12,6 +12,7 @@ public class TrayIconViewModel
     public ICommand ToggleFloatingWindowCommand { get; }
     public ICommand OpenSettingsCommand { get; }
     public ICommand ExitApplicationCommand { get; }
+    public ICommand UnpinWindowCommand { get; }
 
     /// <summary>
     /// Parameterless constructor for XAML resource instantiation (fallback).
@@ -21,6 +22,7 @@ public class TrayIconViewModel
         ToggleFloatingWindowCommand = new RelayCommand(_ => ToggleFloatingWindow());
         OpenSettingsCommand = new RelayCommand(_ => OpenSettings());
         ExitApplicationCommand = new RelayCommand(_ => ExitApplication());
+        UnpinWindowCommand = new RelayCommand(_ => UnpinWindow(), _ => CanUnpinWindow());
     }
 
     /// <summary>
@@ -70,17 +72,34 @@ public class TrayIconViewModel
                     }
                 }, TaskScheduler.FromCurrentSynchronizationContext());
 
-                // When settings window closes, apply changes
-                settingsWindow.Closed += (s, e) =>
+                // Show as dialog and apply all changes on save
+                var result = settingsWindow.ShowDialog();
+                if (result == true)
                 {
-                    if (settingsWindow.DialogResult == true)
-                    {
-                        // Update alert thresholds in the engine
-                        alertEngine?.UpdateThresholds(settingsViewModel.AlertThresholds);
-                    }
-                };
+                    // Update alert thresholds in the engine
+                    alertEngine?.UpdateThresholds(settingsViewModel.AlertThresholds);
 
-                settingsWindow.Show();
+                    // Apply auto-start setting
+                    if (autoStartService is not null)
+                    {
+                        if (settingsViewModel.AutoStartWithWindows && !autoStartService.IsEnabled)
+                            autoStartService.Enable();
+                        else if (!settingsViewModel.AutoStartWithWindows && autoStartService.IsEnabled)
+                            autoStartService.Disable();
+                    }
+
+                    // Apply floating window visibility, opacity, and topmost
+                    if (Application.Current.MainWindow is Window mainWindow)
+                    {
+                        mainWindow.Topmost = settingsViewModel.WindowTopmost;
+                        mainWindow.Opacity = settingsViewModel.WindowOpacity;
+
+                        if (settingsViewModel.ShowFloatingWindow && mainWindow.Visibility != Visibility.Visible)
+                            mainWindow.Show();
+                        else if (!settingsViewModel.ShowFloatingWindow && mainWindow.Visibility == Visibility.Visible)
+                            mainWindow.Hide();
+                    }
+                }
                 return;
             }
         }
@@ -96,6 +115,23 @@ public class TrayIconViewModel
     private void ExitApplication()
     {
         Application.Current.Shutdown();
+    }
+
+    /// <summary>
+    /// Unpins the floating window (disables click-through mode).
+    /// Escape hatch when the window is pinned and the Pin button is also click-through.
+    /// </summary>
+    private void UnpinWindow()
+    {
+        if (Application.Current.MainWindow is { DataContext: MainViewModel vm } && vm.IsClickThrough)
+        {
+            vm.IsClickThrough = false;
+        }
+    }
+
+    private bool CanUnpinWindow()
+    {
+        return Application.Current.MainWindow is { DataContext: MainViewModel vm } && vm.IsClickThrough;
     }
 
     private class RelayCommand : ICommand

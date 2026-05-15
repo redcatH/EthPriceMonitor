@@ -7,15 +7,16 @@
         Title="ETH Price Monitor"
         WindowStyle="None"
         AllowsTransparency="True"
+        Background="Transparent"
         Topmost="{Binding WindowTopmost}"
         Opacity="{Binding WindowOpacity}"
         ResizeMode="NoResize"
         Width="280" Height="160"
-        ShowInTaskbar="False"
-        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+        ShowInTaskbar="False">
 
     <Window.Resources>
         <converters:PriceColorConverter x:Key="PriceColorConverter" />
+        <converters:PinToolTipConverter x:Key="PinToolTipConverter" />
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
 
         <!-- Connection status dot: Connected=green, else=gray -->
@@ -47,14 +48,50 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Top row: Symbol + Connection status -->
-            <DockPanel Grid.Row="0" Margin="0,0,0,8">
+            <!-- Top row: Symbol + Pin button + Connection status -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,8"
+                       MouseLeftButtonDown="Window_MouseLeftButtonDown"
+                       Cursor="SizeAll">
                 <TextBlock Text="ETH/USDT"
                            FontSize="13"
                            FontWeight="SemiBold"
                            Foreground="#374151"
                            DockPanel.Dock="Left"
                            VerticalAlignment="Center" />
+
+                <!-- Pin/Unpin toggle button -->
+                <Button DockPanel.Dock="Right"
+                        Command="{Binding ToggleClickThroughCommand}"
+                        Width="20" Height="20"
+                        Margin="6,0,0,0"
+                        Cursor="Hand"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ToolTip="{Binding IsClickThrough, Converter={StaticResource PinToolTipConverter}}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="Transparent" CornerRadius="3">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <!-- Pin icon: uses Unicode pushpin characters -->
+                    <TextBlock FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="&#x1F4CC;" />
+                                <Setter Property="Foreground" Value="#9CA3AF" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsClickThrough}" Value="True">
+                                        <Setter Property="Text" Value="&#x1F4CC;" />
+                                        <Setter Property="Foreground" Value="#3B82F6" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Button>
+
                 <Ellipse Style="{StaticResource StatusDot}"
                          DockPanel.Dock="Right"
                          HorizontalAlignment="Right"

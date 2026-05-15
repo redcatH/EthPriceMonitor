@@ -9,6 +9,8 @@
         <MenuItem Header="显示/隐藏悬浮窗"
                   Command="{Binding ToggleFloatingWindowCommand}"
                   CommandParameter="{Binding}" />
+        <MenuItem Header="取消置顶"
+                  Command="{Binding UnpinWindowCommand}" />
         <MenuItem Header="设置..."
                   Command="{Binding OpenSettingsCommand}" />
         <Separator />

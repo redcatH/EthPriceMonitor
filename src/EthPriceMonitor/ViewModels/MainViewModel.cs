@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Globalization;
+using System.Windows.Input;
 using EthPriceMonitor.Models;
 using EthPriceMonitor.Services;
 
@@ -19,8 +20,15 @@ public class MainViewModel : INotifyPropertyChanged
     private ConnectionState _connectionStatus = ConnectionState.Disconnected;
     private double _windowOpacity = 1.0;
     private bool _windowTopmost = true;
+    private bool _isClickThrough;
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>
+    /// Raised when click-through mode should be toggled at the View level.
+    /// The View (FloatingWindow) subscribes to this to call Win32 API.
+    /// </summary>
+    public event Action<bool>? ClickThroughChanged;
 
     /// <summary>
     /// Formatted current price, e.g. "$3,123.45"
@@ -89,6 +97,32 @@ public class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Whether the window is in click-through mode (pinned).
+    /// When true, mouse clicks pass through to windows below.
+    /// </summary>
+    public bool IsClickThrough
+    {
+        get => _isClickThrough;
+        set
+        {
+            if (SetField(ref _isClickThrough, value))
+            {
+                ClickThroughChanged?.Invoke(value);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Command to toggle click-through (pin/unpin) mode.
+    /// </summary>
+    public ICommand ToggleClickThroughCommand { get; }
+
+    public MainViewModel()
+    {
+        ToggleClickThroughCommand = new SimpleCommand(() => IsClickThrough = !IsClickThrough);
+    }
+
+    /// <summary>
     /// Updates all display properties from a TickerData instance.
     /// </summary>
     public void UpdateFromTicker(TickerData ticker)
@@ -124,4 +158,23 @@ public class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(propertyName);
         return true;
     }
+}
+
+/// <summary>
+/// Minimal ICommand implementation for parameterless actions.
+/// </summary>
+internal class SimpleCommand : ICommand
+{
+    private readonly Action _execute;
+
+    public SimpleCommand(Action execute) => _execute = execute;
+
+    public event EventHandler? CanExecuteChanged
+    {
+        add { CommandManager.RequerySuggested += value; }
+        remove { CommandManager.RequerySuggested -= value; }
+    }
+
+    public bool CanExecute(object? parameter) => true;
+    public void Execute(object? parameter) => _execute();
 }
