@@ -15,6 +15,7 @@ public class BinanceWebSocketService : IWebSocketService
 {
     private readonly Func<IWebSocketClient> _clientFactory;
     private readonly BinanceTickerParser _parser;
+    private readonly ISettingsService? _settingsService;
     private readonly string _primaryEndpoint;
     private readonly string _fallbackEndpoint;
     private readonly int _staleTimeoutSeconds;
@@ -49,7 +50,7 @@ public class BinanceWebSocketService : IWebSocketService
     }
 
     /// <summary>
-    /// Creates a new BinanceWebSocketService.
+    /// Creates a new BinanceWebSocketService with explicit endpoints.
     /// </summary>
     /// <param name="clientFactory">Factory to create WebSocket clients (for testability and reconnect)</param>
     /// <param name="parser">Binance ticker JSON parser</param>
@@ -74,6 +75,28 @@ public class BinanceWebSocketService : IWebSocketService
     }
 
     /// <summary>
+    /// Creates a new BinanceWebSocketService that resolves the primary endpoint
+    /// from ISettingsService asynchronously at connection time.
+    /// This avoids sync-over-async deadlock in DI registration.
+    /// </summary>
+    public BinanceWebSocketService(
+        Func<IWebSocketClient> clientFactory,
+        BinanceTickerParser parser,
+        ISettingsService settingsService,
+        string fallbackEndpoint,
+        int staleTimeoutSeconds = 30,
+        double reconnectIntervalHours = 23.0)
+    {
+        _clientFactory = clientFactory;
+        _parser = parser;
+        _settingsService = settingsService;
+        _primaryEndpoint = string.Empty; // Resolved in TryConnectWithFallbackAsync
+        _fallbackEndpoint = fallbackEndpoint;
+        _staleTimeoutSeconds = staleTimeoutSeconds;
+        _reconnectIntervalHours = reconnectIntervalHours;
+    }
+
+    /// <summary>
     /// Convenience constructor that uses WebSocketClientWrapper as the default client factory.
     /// </summary>
     public BinanceWebSocketService(
@@ -83,6 +106,20 @@ public class BinanceWebSocketService : IWebSocketService
         int staleTimeoutSeconds = 30,
         double reconnectIntervalHours = 23.0)
         : this(() => new WebSocketClientWrapper(), parser, primaryEndpoint, fallbackEndpoint,
+            staleTimeoutSeconds, reconnectIntervalHours)
+    {
+    }
+
+    /// <summary>
+    /// Convenience constructor with ISettingsService, using WebSocketClientWrapper as the default client factory.
+    /// </summary>
+    public BinanceWebSocketService(
+        BinanceTickerParser parser,
+        ISettingsService settingsService,
+        string fallbackEndpoint,
+        int staleTimeoutSeconds = 30,
+        double reconnectIntervalHours = 23.0)
+        : this(() => new WebSocketClientWrapper(), parser, settingsService, fallbackEndpoint,
             staleTimeoutSeconds, reconnectIntervalHours)
     {
     }
@@ -163,7 +200,15 @@ public class BinanceWebSocketService : IWebSocketService
 
     private async Task TryConnectWithFallbackAsync(CancellationToken cancellationToken)
     {
-        var endpoints = new[] { _primaryEndpoint, _fallbackEndpoint };
+        // Resolve primary endpoint from settings if ISettingsService was injected
+        var primaryEndpoint = _primaryEndpoint;
+        if (_settingsService is not null)
+        {
+            var settings = await _settingsService.LoadSettingsAsync();
+            primaryEndpoint = settings.WebSocketUrl;
+        }
+
+        var endpoints = new[] { primaryEndpoint, _fallbackEndpoint };
 
         foreach (var endpoint in endpoints)
         {

@@ -156,10 +156,9 @@ public partial class App : Application
         {
             var parser = sp.GetRequiredService<BinanceTickerParser>();
             var settingsService = sp.GetRequiredService<ISettingsService>();
-            var appSettings = settingsService.LoadSettingsAsync().GetAwaiter().GetResult();
             return new BinanceWebSocketService(
                 parser,
-                appSettings.WebSocketUrl,
+                settingsService,
                 "wss://data-stream.binance.vision/ws/ethusdt@ticker");
         });
         services.AddSingleton<ISettingsService, JsonSettingsService>();
