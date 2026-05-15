@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Playwright MCP cache
+.playwright-mcp/
+
 # User-specific files
 *.rsuser
 *.suo
