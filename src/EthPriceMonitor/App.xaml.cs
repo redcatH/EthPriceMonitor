@@ -47,6 +47,8 @@ public partial class App : Application
 
         // Create FloatingWindow with MainViewModel
         _mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
+        _mainViewModel.WindowOpacity = settings.WindowOpacity;
+        _mainViewModel.WindowTopmost = settings.WindowTopmost;
         _floatingWindow = new FloatingWindow { DataContext = _mainViewModel };
         MainWindow = _floatingWindow;
 

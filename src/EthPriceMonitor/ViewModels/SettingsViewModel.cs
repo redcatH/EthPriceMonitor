@@ -16,6 +16,8 @@ public class SettingsViewModel : INotifyPropertyChanged
     private AlertThreshold? _selectedThreshold;
     private bool _autoStartWithWindows;
     private bool _showFloatingWindow;
+    private double _windowOpacity = 1.0;
+    private bool _windowTopmost = true;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -40,6 +42,18 @@ public class SettingsViewModel : INotifyPropertyChanged
     {
         get => _showFloatingWindow;
         set => SetField(ref _showFloatingWindow, value);
+    }
+
+    public double WindowOpacity
+    {
+        get => _windowOpacity;
+        set => SetField(ref _windowOpacity, Math.Clamp(value, 0.2, 1.0));
+    }
+
+    public bool WindowTopmost
+    {
+        get => _windowTopmost;
+        set => SetField(ref _windowTopmost, value);
     }
 
     /// <summary>
@@ -96,6 +110,8 @@ public class SettingsViewModel : INotifyPropertyChanged
 
         AutoStartWithWindows = settings.AutoStartWithWindows;
         ShowFloatingWindow = settings.ShowFloatingWindow;
+        WindowOpacity = settings.WindowOpacity;
+        WindowTopmost = settings.WindowTopmost;
     }
 
     /// <summary>
@@ -149,7 +165,9 @@ public class SettingsViewModel : INotifyPropertyChanged
         {
             AlertThresholds = AlertThresholds.ToList(),
             AutoStartWithWindows = AutoStartWithWindows,
-            ShowFloatingWindow = ShowFloatingWindow
+            ShowFloatingWindow = ShowFloatingWindow,
+            WindowOpacity = WindowOpacity,
+            WindowTopmost = WindowTopmost
         };
 
         await _settingsService.SaveSettingsAsync(settings);

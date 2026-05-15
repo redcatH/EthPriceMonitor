@@ -17,6 +17,8 @@ public class MainViewModel : INotifyPropertyChanged
     private string _highPrice = "0.00";
     private string _lowPrice = "0.00";
     private ConnectionState _connectionStatus = ConnectionState.Disconnected;
+    private double _windowOpacity = 1.0;
+    private bool _windowTopmost = true;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -72,6 +74,18 @@ public class MainViewModel : INotifyPropertyChanged
     {
         get => _connectionStatus;
         set => SetField(ref _connectionStatus, value);
+    }
+
+    public double WindowOpacity
+    {
+        get => _windowOpacity;
+        set => SetField(ref _windowOpacity, Math.Clamp(value, 0.2, 1.0));
+    }
+
+    public bool WindowTopmost
+    {
+        get => _windowTopmost;
+        set => SetField(ref _windowTopmost, value);
     }
 
     /// <summary>

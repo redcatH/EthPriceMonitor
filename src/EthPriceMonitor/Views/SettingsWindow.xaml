@@ -2,7 +2,9 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:EthPriceMonitor.ViewModels"
+        xmlns:models="clr-namespace:EthPriceMonitor.Models"
         xmlns:converters="clr-namespace:EthPriceMonitor.Converters"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         Title="ETH Price Monitor 设置"
         Width="400" Height="500"
         ResizeMode="CanResize"
@@ -11,6 +13,13 @@
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+        <ObjectDataProvider x:Key="AlertDirections"
+                            MethodName="GetValues"
+                            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="models:AlertDirection" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
     </Window.Resources>
 
     <Grid Margin="16">
@@ -43,14 +52,17 @@
                     <GridViewColumn Header="价格" Width="100">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Price, StringFormat='${0:F2}'}" />
+                                <TextBox Text="{Binding Price, UpdateSourceTrigger=PropertyChanged}"
+                                         Width="80" HorizontalAlignment="Left" />
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
                     <GridViewColumn Header="方向" Width="80">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Direction}" />
+                                <ComboBox ItemsSource="{Binding Source={StaticResource AlertDirections}}"
+                                          SelectedValue="{Binding Direction}"
+                                          Width="60" />
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
@@ -64,7 +76,8 @@
                     <GridViewColumn Header="标签" Width="120">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Label}" />
+                                <TextBox Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}"
+                                         Width="100" HorizontalAlignment="Left" />
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
@@ -102,18 +115,40 @@
                       Margin="0,0,0,8" />
             <CheckBox Content="显示悬浮窗"
                       IsChecked="{Binding ShowFloatingWindow}"
-                      Foreground="{DynamicResource ForegroundBrush}" />
+                      Foreground="{DynamicResource ForegroundBrush}"
+                      Margin="0,0,0,8" />
+            <CheckBox Content="窗口置顶"
+                      IsChecked="{Binding WindowTopmost}"
+                      Foreground="{DynamicResource ForegroundBrush}"
+                      Margin="0,0,0,8" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                <TextBlock Text="透明度"
+                           Foreground="{DynamicResource ForegroundBrush}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0" />
+                <Slider Value="{Binding WindowOpacity}"
+                        Minimum="0.2" Maximum="1.0"
+                        Width="150"
+                        VerticalAlignment="Center"
+                        TickFrequency="0.1"
+                        IsSnapToTickEnabled="True" />
+                <TextBlock Text="{Binding WindowOpacity, StringFormat='{}{0:P0}'}"
+                           Foreground="{DynamicResource ForegroundBrush}"
+                           VerticalAlignment="Center"
+                           Margin="8,0,0,0" />
+            </StackPanel>
         </StackPanel>
 
         <!-- 按钮区域 -->
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="保存"
-                    Command="{Binding SaveCommand}"
+                    Click="SaveButton_Click"
                     Padding="16,8"
                     Margin="0,0,8,0"
                     Background="{DynamicResource AccentBrush}"
                     Foreground="White" />
             <Button Content="取消"
+                    Click="CancelButton_Click"
                     Padding="16,8"
                     Background="#E0E0E0"
                     Foreground="{DynamicResource ForegroundBrush}" />
