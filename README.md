@@ -19,17 +19,9 @@ A lightweight Windows desktop widget that displays real-time ETH/USDT price from
 
 ## Screenshots
 
-*Floating widget (unpinned — draggable)*
+*Floating widget (light theme, unpinned — draggable)*
 
-```
-┌──────────────────────────┐
-│ ETH/USDT  📌  ●          │  ← drag handle + pin button + connection dot
-│                          │
-│  $3,123.45               │  ← real-time price
-│                          │
-│  +1.23%      H 3200  L 3050 │  ← 24h change + high/low
-└──────────────────────────┘
-```
+![Floating widget light theme](screenshot_widget.png)
 
 ## Getting Started
 

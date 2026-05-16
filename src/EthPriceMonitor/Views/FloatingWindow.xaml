@@ -32,9 +32,9 @@
         </Style>
     </Window.Resources>
 
-    <Border Background="#F3F3F3"
+    <Border Background="{DynamicResource CardBackgroundBrush}"
             CornerRadius="8"
-            BorderBrush="#E0E0E0"
+            BorderBrush="{DynamicResource BorderBrush}"
             BorderThickness="1"
             Padding="16,12">
         <Border.Effect>
@@ -52,12 +52,12 @@
             <DockPanel Grid.Row="0" Margin="0,0,0,8"
                        MouseLeftButtonDown="Window_MouseLeftButtonDown"
                        Cursor="SizeAll">
-                <TextBlock Text="ETH/USDT"
-                           FontSize="13"
-                           FontWeight="SemiBold"
-                           Foreground="#374151"
-                           DockPanel.Dock="Left"
-                           VerticalAlignment="Center" />
+<TextBlock Text="ETH/USDT"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Foreground="{DynamicResource ForegroundBrush}"
+                            DockPanel.Dock="Left"
+                            VerticalAlignment="Center" />
 
                 <!-- Pin/Unpin toggle button -->
                 <Button DockPanel.Dock="Right"
@@ -119,11 +119,11 @@
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center">
-                    <TextBlock FontSize="11" Foreground="#6B7280">
+                    <TextBlock FontSize="11" Foreground="{DynamicResource StatusDisconnectedBrush}">
                         <Run Text="H:" />
                         <Run Text="{Binding HighPrice, Mode=OneWay}" />
                     </TextBlock>
-                    <TextBlock FontSize="11" Foreground="#6B7280" Margin="8,0,0,0">
+                    <TextBlock FontSize="11" Foreground="{DynamicResource StatusDisconnectedBrush}" Margin="8,0,0,0">
                         <Run Text="L:" />
                         <Run Text="{Binding LowPrice, Mode=OneWay}" />
                     </TextBlock>
